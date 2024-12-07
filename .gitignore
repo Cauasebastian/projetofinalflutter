@@ -41,3 +41,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Exceção para rastrear a pasta backend/demo
+!backend/demo/
+!backend/demo/**
