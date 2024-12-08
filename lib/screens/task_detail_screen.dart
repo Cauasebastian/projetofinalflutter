@@ -76,8 +76,23 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     await taskProvider.updateTask(updatedTask);  // Atualizar no servidor
     setState(() {
       _isEditing = false;
-      widget.task = updatedTask;  // Atualizar a tarefa localmente
+      // Não é possível atualizar widget.task diretamente, mas podemos atualizar os controladores
+      _originalTitle = updatedTask.title;
+      _originalDescription = updatedTask.description;
+      _originalDueDate = updatedTask.dueDate;
     });
+  }
+
+  void _toggleCompletionStatus(TaskProvider taskProvider) async {
+    setState(() {
+      if (widget.task.completionDate == null) {
+        widget.task.completionDate = DateTime.now();  // Marca como concluída
+      } else {
+        widget.task.completionDate = null;  // Desmarca como concluída
+      }
+    });
+
+    await taskProvider.updateTask(widget.task);  // Atualizar no servidor
   }
 
   @override
@@ -165,39 +180,86 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
             // Botões de Ação: Editar, Concluir ou Descartar alterações
             Row(
-              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Botão de concluir/desmarcar tarefa
+                _isEditing
+                    ? Container()
+                    : Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _toggleCompletionStatus(taskProvider),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.task.completionDate == null
+                          ? Colors.green // Marca como concluída
+                          : Colors.orange, // Se já concluída, permite desmarcar
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                      minimumSize: Size(double.infinity, 50),  // Largura total e altura de 50
+                    ),
+                    child: Text(
+                      widget.task.completionDate == null ? 'Concluir' : 'Reabrir tarefa',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10),
+
                 // Botão de editar
                 _isEditing
-                    ? ElevatedButton(
-                  onPressed: () => _saveChanges(taskProvider),
-                  child: Text('Concluir Alterações'),
+                    ? Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _saveChanges(taskProvider),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green, // Cor de fundo para salvar
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                      minimumSize: Size(double.infinity, 50),  // Largura total e altura de 50
+                    ),
+                    child: Text('Concluir Alterações', style: TextStyle(color: Colors.white)),
+                  ),
                 )
-                    : ElevatedButton(
-                  onPressed: _toggleEditingMode,
-                  child: Text('Editar'),
+                    : Expanded(
+                  child: ElevatedButton(
+                    onPressed: _toggleEditingMode,
+                    style: ElevatedButton.styleFrom(// Cor de fundo para editar
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                      minimumSize: Size(double.infinity, 50),  // Largura total e altura de 50
+                    ),
+                    child: Text('Editar', style: TextStyle(color: Colors.black)),
+                  ),
                 ),
-                SizedBox(width: 20),
+                SizedBox(width: 10),
 
                 // Botão de descartar alterações
                 _isEditing
-                    ? ElevatedButton(
-                  onPressed: _discardChanges,
-                  child: Text('Descartar Alterações'),
-                  style: ElevatedButton.styleFrom(primary: Colors.grey),
+                    ? Expanded(
+                  child: ElevatedButton(
+                    onPressed: _discardChanges,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,  // Cor de fundo para descartar
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                      minimumSize: Size(double.infinity, 50),  // Largura total e altura de 50
+                    ),
+                    child: Text('Descartar', style: TextStyle(color: Colors.black)),
+                  ),
                 )
                     : Container(),
               ],
             ),
             SizedBox(height: 20),
 
-            // Botão de excluir tarefa
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () {
-                taskProvider.deleteTask(widget.task.id);
-                Navigator.pop(context); // Voltar para a lista
-              },
+            // Botão de excluir tarefa (centralizado na parte inferior)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: TextButton.icon(
+                icon: Icon(Icons.delete, color: Colors.red),
+                label: Text(
+                  "Apagar tarefa",
+                  style: TextStyle(color: Colors.red),
+                ),
+                onPressed: () {
+                  taskProvider.deleteTask(widget.task.id);
+                  Navigator.pop(context); // Voltar para a lista
+                },
+              ),
             ),
           ],
         ),
