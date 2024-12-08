@@ -13,9 +13,11 @@ import 'screens/PasswordRecoveryScreen.dart';
 import 'screens/settings_screen.dart'; // Import the Settings screen
 import 'providers/task_provider.dart';
 
-void main() {
+
+Future<void> main() async {
   runApp(TaskManagerApp());
 }
+
 
 class TaskManagerApp extends StatelessWidget {
   @override

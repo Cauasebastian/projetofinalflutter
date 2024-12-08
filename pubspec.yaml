@@ -8,8 +8,10 @@ environment:
   sdk: ">=3.5.3 <4.0.0"
 
 dependencies:
+  http: ^1.0.0
   flutter:
     sdk: flutter
+
 
   cupertino_icons: ^1.0.8
   provider: ^6.0.5 # Adicione esta linha

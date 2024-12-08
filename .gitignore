@@ -45,3 +45,7 @@ app.*.map.json
 # Exceção para rastrear a pasta backend/demo
 !backend/demo/
 !backend/demo/**
+
+# .gitignore
+.env
+

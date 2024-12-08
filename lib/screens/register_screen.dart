@@ -1,15 +1,50 @@
-// lib/screens/register_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RegisterScreen extends StatelessWidget {
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
 
-  void _register(BuildContext context) {
-    // Implementar lógica de registro com o backend
-    Navigator.pushReplacementNamed(context, '/main');
+  Future<void> _register(BuildContext context) async {
+    final String name = nameController.text.trim();
+    final String email = emailController.text.trim();
+    final String password = passwordController.text.trim();
+    final String confirmPassword = confirmPasswordController.text.trim();
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("As senhas não coincidem")));
+      return;
+    }
+
+    if (name.length < 2 || name.length > 50) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("O nome deve ter entre 2 e 50 caracteres")));
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://192.168.15.106:8080/auth/register'), // Altere o IP/localhost se necessário
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Registro bem-sucedido!")));
+        Navigator.pushReplacementNamed(context, '/main');
+      } else {
+        final errorResponse = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro: ${errorResponse['message']}")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro de conexão: $e")));
+    }
   }
 
   @override
@@ -18,20 +53,20 @@ class RegisterScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Registrar'),
       ),
-      body: Center( // Centraliza horizontalmente
-        child: SingleChildScrollView( // Permite rolagem
+      body: Center(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // Centraliza verticalmente
-            crossAxisAlignment: CrossAxisAlignment.stretch, // Ocupa toda a largura disponível
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Logo ou imagem opcional
-              // Center(
-              //   child: Image.asset(
-              //     'assets/logo.png',
-              //     height: 100,
-              //   ),
-              // ),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Nome',
+                  border: OutlineInputBorder(),
+                ),
+              ),
               SizedBox(height: 20),
               TextField(
                 controller: emailController,
@@ -69,7 +104,7 @@ class RegisterScreen extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // Retorna para a tela de login
+                  Navigator.pop(context);
                 },
                 child: Text('Já tem uma conta? Entre'),
               ),
