@@ -1,5 +1,3 @@
-// lib/screens/main_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/drawer_widget.dart';
@@ -7,8 +5,20 @@ import '../providers/task_provider.dart';
 import 'task_detail_screen.dart';
 import '../models/task.dart';
 
+class MainScreen extends StatefulWidget {
+  @override
+  _MainScreenState createState() => _MainScreenState();
+}
 
-class MainScreen extends StatelessWidget {
+class _MainScreenState extends State<MainScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Chama o método fetchTasks assim que o widget for iniciado
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+    taskProvider.fetchTasks(); // Carregar as tarefas inicialmente
+  }
+
   @override
   Widget build(BuildContext context) {
     final taskProvider = Provider.of<TaskProvider>(context);
@@ -22,10 +32,13 @@ class MainScreen extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () async {
-              // Ação para adicionar nova tarefa
               final newTask = await Navigator.pushNamed(context, '/addTask') as Task?;
               if (newTask != null) {
                 taskProvider.addTask(newTask);
+                // Atualiza a lista de tarefas após adicionar uma nova tarefa
+                setState(() {
+                  taskProvider.fetchTasks(); // Recarregar as tarefas
+                });
               }
             },
           ),
@@ -37,7 +50,7 @@ class MainScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: tasks.isEmpty
+      body: taskProvider.tasks.isEmpty
           ? Center(
         child: Text('Nenhuma tarefa adicionada.'),
       )
@@ -47,15 +60,12 @@ class MainScreen extends StatelessWidget {
           var task = tasks[index];
           return ListTile(
             title: Text(task.title),
-            subtitle: Text(
-              'Entrega: ${formatDateTime(task.dueDate)}',
-            ),
+            subtitle: Text('Entrega: ${formatDateTime(task.dueDate)}'),
             trailing: Icon(
               task.isFavorite ? Icons.favorite : Icons.favorite_border,
               color: task.isFavorite ? Colors.red : null,
             ),
             onTap: () async {
-              // Navegar para a tela de detalhes usando MaterialPageRoute
               final updatedTask = await Navigator.push<Task>(
                 context,
                 MaterialPageRoute(
@@ -74,7 +84,6 @@ class MainScreen extends StatelessWidget {
   }
 
   String formatDateTime(DateTime dateTime) {
-    // Formatar a data e a hora
     return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} às ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

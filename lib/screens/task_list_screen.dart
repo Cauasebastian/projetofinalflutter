@@ -1,5 +1,3 @@
-// lib/screens/task_list_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/task.dart';
@@ -20,65 +18,63 @@ class TaskListScreen extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.filter_list),
             onPressed: () {
-              // Implementar filtro (opcional)
+              // Implemente qualquer filtro se necessário
             },
           ),
         ],
       ),
-      body: tasks.isEmpty
-          ? Center(
-        child: Text('Nenhuma tarefa adicionada.'),
-      )
-          : ListView.builder(
-        itemCount: tasks.length,
-        itemBuilder: (context, index) {
-          var task = tasks[index];
-          return ListTile(
-            title: Text(task.title),
-            subtitle: Text(
-              'Entrega: ${formatDateTime(task.dueDate)}',
-            ),
-            trailing: Icon(
-              task.isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: task.isFavorite ? Colors.red : null,
-            ),
-            onTap: () async {
-              // Navegar para a tela de detalhes usando MaterialPageRoute
-              final updatedTask = await Navigator.push<Task>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TaskDetailScreen(task: task),
-                ),
-              );
-
-              if (updatedTask != null) {
-                taskProvider.updateTask(updatedTask);
-              }
-            },
-          );
+      body: FutureBuilder(
+        future: taskProvider.fetchTasks(),
+        builder: (ctx, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erro ao carregar as tarefas'));
+          } else {
+            return Consumer<TaskProvider>(
+              builder: (ctx, taskProvider, _) {
+                final tasks = taskProvider.tasks;
+                return ListView.builder(
+                  itemCount: tasks.length,
+                  itemBuilder: (ctx, index) {
+                    final task = tasks[index];
+                    return ListTile(
+                      title: Text(task.title),
+                      subtitle: Text(task.description),
+                      trailing: IconButton(
+                        icon: Icon(
+                          task.isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: task.isFavorite ? Colors.red : null,
+                        ),
+                        onPressed: () {
+                          taskProvider.toggleFavorite(task.id); // Chama o método para atualizar o favorito
+                        },
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (ctx) => TaskDetailScreen(task: task),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            );
+          }
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // Navegar para a tela de adicionar tarefa e esperar o resultado
-          final newTask = await Navigator.push<Task>(
+        onPressed: () {
+          Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => AddTaskScreen(),
-            ),
+            MaterialPageRoute(builder: (ctx) => AddTaskScreen()),
           );
-
-          if (newTask != null) {
-            taskProvider.addTask(newTask);
-          }
         },
         child: Icon(Icons.add),
       ),
     );
-  }
-
-  String formatDateTime(DateTime dateTime) {
-    // Formatar a data e a hora
-    return '${dateTime.toLocal().toString().split(' ')[0]} às ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

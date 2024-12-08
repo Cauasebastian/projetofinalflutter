@@ -106,4 +106,12 @@ public class TaskService {
         Task task = getTaskById(id); // Check if task exists
         taskRepository.delete(task);
     }
+    public List<Task> getTasksByUser(String username) {
+        Optional<User> user = userRepository.findByEmail(username); // Ou método de busca por usuário
+        if (user.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return taskRepository.findByUser(user.orElse(null)); // Assumindo que você tenha um repositório para isso
+    }
+
 }

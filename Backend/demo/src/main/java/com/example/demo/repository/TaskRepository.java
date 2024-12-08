@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.Task;
+import com.example.demo.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
@@ -13,5 +14,5 @@ public interface TaskRepository extends MongoRepository<Task, String> {
         Optional<Task> findById(String id);
 
 
-
+        List<Task> findByUser(User user);
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_service.dart'; // Importe o AuthService
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -20,6 +22,11 @@ class LoginScreen extends StatelessWidget {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final accessToken = data['accessToken']; // Salve o token em um lugar seguro
+
+        // Armazenando o token usando SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('accessToken', accessToken);
+
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Login bem-sucedido!")));
         Navigator.pushReplacementNamed(context, '/main');
       } else {

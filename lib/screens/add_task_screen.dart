@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import '../models/task.dart';
+import '../services/task_service.dart';
+
 
 class AddTaskScreen extends StatefulWidget {
   @override
@@ -16,7 +18,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   DateTime _dueDate = DateTime.now().add(Duration(days: 1));
   TimeOfDay _dueTime = TimeOfDay(hour: 12, minute: 0);
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
@@ -29,17 +31,33 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         _dueTime.minute,
       );
 
+      // Criando a nova tarefa
       final newTask = Task(
         id: DateTime.now().millisecondsSinceEpoch, // ID único baseado no timestamp
         title: _title,
         description: _description,
         creationDate: DateTime.now(),
-        dueDate: dueDateTime,
+        dueDate: dueDateTime, userId: '',
       );
 
-      Navigator.pop(context, newTask);
+      // Convertendo a tarefa para JSON
+      final taskJson = newTask.toJson();
+
+      // Enviar para o backend
+      try {
+        final taskService = TaskService();
+        await taskService.addTask(newTask);  // Envia a tarefa para a API
+
+        // Fechar a tela e retornar à tela anterior
+        Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao adicionar a tarefa: $e')),
+        );
+      }
     }
   }
+
 
   Future<void> _pickDueDate() async {
     final DateTime? pickedDate = await showDatePicker(

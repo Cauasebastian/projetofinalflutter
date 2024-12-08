@@ -4,6 +4,8 @@ import com.example.demo.model.Task;
 import com.example.demo.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,52 +21,28 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    /**
-     * Retrieves all tasks.
-     * @return List of tasks.
-     */
     @GetMapping
+    @PreAuthorize("isAuthenticated()") // Somente usuários autenticados
     public ResponseEntity<List<Task>> getAllTasks() {
-        List<Task> tasks = taskService.getAllTasks();
-        if (tasks == null || tasks.isEmpty()) { // Null-safe check
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Task> tasks = taskService.getTasksByUser(username);
+
+        if (tasks == null || tasks.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
+
         return ResponseEntity.ok(tasks);
     }
 
-
-    /**
-     * Retrieves a task by its ID.
-     * @param id Task ID.
-     * @return The task if found.
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable String id) {
-        Task task = taskService.getTaskById(id);
-        if (task == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(task);
-    }
-
-    /**
-     * Creates a new task.
-     * @param task Task to be created.
-     * @return The created task.
-     */
     @PostMapping
+    @PreAuthorize("isAuthenticated()") // Somente usuários autenticados
     public ResponseEntity<Task> createTask(@RequestBody Task task) {
         Task createdTask = taskService.createTask(task);
         return ResponseEntity.ok(createdTask);
     }
 
-    /**
-     * Updates an existing task by ID.
-     * @param id Task ID.
-     * @param task Task data to update.
-     * @return The updated task.
-     */
     @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()") // Somente usuários autenticados
     public ResponseEntity<Task> updateTask(@PathVariable String id, @RequestBody Task task) {
         Task updatedTask = taskService.updateTask(id, task);
         if (updatedTask == null) {
@@ -73,18 +51,15 @@ public class TaskController {
         return ResponseEntity.ok(updatedTask);
     }
 
-    /**
-     * Deletes a task by its ID.
-     * @param id Task ID.
-     * @return Response indicating success or failure.
-     */
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteTask(@PathVariable String id) {
-        taskService.deleteTask(id);
-        if (taskService.getTaskById(id) == null
-                && taskService.getTaskById(id).getId() == null) {
-            return ResponseEntity.ok().build();
+        try {
+            taskService.deleteTask(id); // Tenta excluir a tarefa
+            return ResponseEntity.ok().build(); // Se não houver exceção, a tarefa foi excluída com sucesso
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build(); // Se a exceção for lançada, a tarefa não foi encontrada
         }
-        return ResponseEntity.notFound().build();
     }
+
 }

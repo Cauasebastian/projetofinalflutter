@@ -37,7 +37,7 @@ class RegisterScreen extends StatelessWidget {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Registro bem-sucedido!")));
-        Navigator.pushReplacementNamed(context, '/main');
+        Navigator.pushReplacementNamed(context, '/login'); // Navega para a tela de login após o registro
       } else {
         final errorResponse = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erro: ${errorResponse['message']}")));
