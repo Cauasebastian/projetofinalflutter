@@ -1,69 +1,100 @@
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
+import '../services/user_service.dart';
 
 class UserProvider with ChangeNotifier {
-  User _user = User(
-    id: 1,
-    name: 'João Silva',
-    email: 'joao.silva@example.com',
-    dateOfBirth: DateTime(1990, 5, 15),
-  );
+  final UserService _userService = UserService();
 
-  
-  User get user => _user;
+  User? _user;
+  bool _isLoading = false; // Indica se uma operação está em andamento
+  String? _errorMessage; // Armazena mensagens de erro, se houver
 
-  
-  void updateUser(User updatedUser) {
-    _user = updatedUser;
+  User? get user => _user;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  // Carrega o usuário do backend
+  Future<void> loadUser() async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-  }
-
-  
-  void updateName(String name) {
-    if (name.isNotEmpty && name != _user.name) {
-      _user.name = name;
+    try {
+      User fetchedUser = await _userService.fetchCurrentUser();
+      _user = fetchedUser;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _user = null;
+      // Opcional: Implementar lógica de redirecionamento para login se o token for inválido
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  
-  void updateEmail(String email) {
-    if (email.isNotEmpty && email.contains('@') && email != _user.email) {
-      _user.email = email;
-      notifyListeners();
-    }
-  }
-
-  
-  void updateDateOfBirth(DateTime dateOfBirth) {
-    if (dateOfBirth != _user.dateOfBirth) {
-      _user.dateOfBirth = dateOfBirth;
-      notifyListeners();
-    }
-  }
-
-  void editUserDetails({
+  // Atualiza o usuário no backend e localmente
+  Future<void> updateUser({
     String? name,
     String? email,
+    String? password, // **Nota:** Evite manipular a senha dessa forma
     DateTime? dateOfBirth,
-  }) {
-    bool hasChanges = false;
-
-    if (name != null && name.isNotEmpty && name != _user.name) {
-      _user.name = name;
-      hasChanges = true;
-    }
-    if (email != null && email.isNotEmpty && email.contains('@') && email != _user.email) {
-      _user.email = email;
-      hasChanges = true;
-    }
-    if (dateOfBirth != null && dateOfBirth != _user.dateOfBirth) {
-      _user.dateOfBirth = dateOfBirth;
-      hasChanges = true;
+  }) async {
+    if (_user == null) {
+      throw Exception('Usuário não carregado');
     }
 
-    if (hasChanges) {
+    // Cria um novo objeto User com os campos atualizados
+    User updatedUser = User(
+      id: _user!.id,
+      name: name ?? _user!.name,
+      email: email ?? _user!.email,
+      password: password, // Apenas envia se não for nulo
+      dateOfBirth: dateOfBirth ?? _user!.dateOfBirth,
+    );
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _userService.updateUser(updatedUser);
+      _user = updatedUser;
+    } catch (e) {
+      _errorMessage = e.toString();
+      print('Erro ao atualizar o usuário: $e');
+      throw e;
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
+  }
+
+  // Método para alterar a senha do usuário
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _userService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      // Opcional: Implementar lógica adicional, como logout
+    } catch (e) {
+      _errorMessage = e.toString();
+      print('Erro ao alterar a senha: $e');
+      throw e;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Método para logout
+  Future<void> logout() async {
+    await _userService.logout();
+    _user = null;
+    notifyListeners();
   }
 }

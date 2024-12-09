@@ -15,35 +15,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   late String _name;
   late String _email;
+  String? _password; // Campo para nova senha, se necessário
   late DateTime _dateOfBirth;
+  bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    final user = Provider.of<UserProvider>(context, listen: false).user;
-    _name = user.name;
-    _email = user.email;
-    _dateOfBirth = user.dateOfBirth;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final user = Provider.of<UserProvider>(context).user;
+    if (user != null) {
+      _name = user.name;
+      _email = user.email;
+      _dateOfBirth = user.dateOfBirth ?? DateTime(1990, 1, 1); // Valor padrão se nulo
+      // Não preenche o campo de senha
+    }
   }
 
-  void _saveForm() {
+  void _saveForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      Provider.of<UserProvider>(context, listen: false).updateUser(
-        User(
-          id: 1, // Preserving the same ID
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await Provider.of<UserProvider>(context, listen: false).updateUser(
           name: _name,
           email: _email,
+          password: _password, // Opcional
           dateOfBirth: _dateOfBirth,
-        ),
-      );
+        );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informações atualizadas com sucesso!')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informações atualizadas com sucesso!')),
+        );
 
-      Navigator.pop(context);
+        Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao atualizar informações: $e')),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -63,13 +80,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
+
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Editar Perfil'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Perfil'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Form(
           key: _formKey,
           child: ListView(
             children: [
@@ -101,11 +133,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 },
               ),
               const SizedBox(height: 16),
+              TextFormField(
+                decoration:
+                const InputDecoration(labelText: 'Nova Senha'),
+                obscureText: true,
+                validator: (value) {
+                  if (value != null &&
+                      value.isNotEmpty &&
+                      value.length < 8) {
+                    return 'A senha deve ter pelo menos 8 caracteres.';
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  _password = value;
+                },
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      'Data de Nascimento: ${_dateOfBirth.toLocal()}'.split(' ')[0],
+                      'Data de Nascimento: ${_dateOfBirth.day.toString().padLeft(2, '0')}/${_dateOfBirth.month.toString().padLeft(2, '0')}/${_dateOfBirth.year}',
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
                   TextButton(

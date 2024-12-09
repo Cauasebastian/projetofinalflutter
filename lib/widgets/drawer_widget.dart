@@ -1,5 +1,3 @@
-// lib/widgets/drawer_widget.dart
-
 import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -32,6 +30,13 @@ class AppDrawer extends StatelessWidget {
             title: Text('Tarefas'),
             onTap: () {
               Navigator.pushReplacementNamed(context, '/main');
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.star),
+            title: Text('Favoritos'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/favorites');
             },
           ),
           ListTile(

@@ -23,8 +23,10 @@ public class UserService {
     }
 
     public User salvarUsuario(User usuario) {
-        // Criptografa a senha antes de salvar
-        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        // Verifica se a senha foi alterada antes de criptografar
+        if (usuario.getPassword() != null && !usuario.getPassword().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        }
         return userRepository.save(usuario);
     }
 
@@ -32,7 +34,7 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public void deleteUser(String id) {
+        userRepository.deleteById(id);
     }
 }

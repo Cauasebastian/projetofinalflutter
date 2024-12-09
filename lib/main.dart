@@ -17,7 +17,7 @@ import 'screens/settings_screen.dart'; // Import the Settings screen
 import 'providers/task_provider.dart';
 import 'services/auth_service.dart';
 import 'providers/theme_provider.dart'; // Importar o ThemeProvider
-
+import 'screens/favorite_screen.dart'; // Import da FavoriteScreen
 
 
 Future<void> main() async {
@@ -59,8 +59,8 @@ class TaskManagerApp extends StatelessWidget {
           '/settings': (context) => SettingsScreen(),
           '/help': (context) => HelpScreen(), // Rota para a tela de Ajuda
           '/about': (context) => AboutScreen(),
-          '/notification': (context) => NotificationsScreen()
-
+          '/notification': (context) => NotificationsScreen(),
+          '/favorites': (context) => const FavoriteScreen(),
         },
       );
         },

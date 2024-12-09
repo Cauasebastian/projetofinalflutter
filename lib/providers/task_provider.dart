@@ -49,7 +49,7 @@ class TaskProvider with ChangeNotifier {
       throw Exception('Falha ao adicionar a tarefa');
     }
   }
-  // Novo método: Alternar o status de favorito
+  // Método para alternar o status de favorito
   Future<void> toggleFavorite(int taskId) async {
     final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
     if (taskIndex >= 0) {
@@ -60,13 +60,17 @@ class TaskProvider with ChangeNotifier {
         description: task.description,
         creationDate: task.creationDate,
         dueDate: task.dueDate,
-        isFavorite: !task.isFavorite,  // Inverte o status de favorito
+        isFavorite: !task.isFavorite, // Inverte o status de favorito
         completionDate: task.completionDate,
         userId: task.userId,
       );
 
-      // Atualiza o status de favorito no backend
-      await updateTask(updatedTask);  // Usa o método updateTask para atualizar o backend
+      try {
+        await updateTask(updatedTask); // Atualiza no backend
+      } catch (e) {
+        print('[toggleFavorite] Erro ao alternar favorito: $e');
+        // Opcional: Implementar lógica de reversão ou feedback ao usuário
+      }
     }
   }
 }
